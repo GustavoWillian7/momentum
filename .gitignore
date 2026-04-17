@@ -1,0 +1,36 @@
+# ─── Credenciais e tokens (NUNCA versionar) ───
+backend/credentials.json
+backend/token.json
+
+# ─── Dependências ───
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# ─── Build ───
+backend/dist/
+frontend/dist/
+
+# ─── Vídeos temporários ───
+backend/temp/buffer/
+backend/temp/outputs/
+backend/temp/concat.txt
+
+# ─── TypeScript ───
+*.tsbuildinfo
+backend/node_modules/.tmp/
+
+# ─── Logs ───
+*.log
+npm-debug.log*
+
+# ─── Sistema operacional ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Editor ───
+.vscode/
+.idea/
+*.suo
+*.user

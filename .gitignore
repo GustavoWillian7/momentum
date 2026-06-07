@@ -35,8 +35,8 @@ desktop.ini
 *.suo
 *.user
 
-# Claude
+# ─── Documentação de sessão (gerada pelo Claude, não versionar) ───
 CLAUDE.md
 
-analise-tecnica.pdf
-briefing-momentum.pdf
+# ─── Documentos de planejamento (mantidos localmente, não versionar) ───
+*.pdf

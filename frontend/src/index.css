@@ -1,0 +1,66 @@
+/* ─── VARIÁVEIS CSS ─── */
+:root {
+  --areia:        #FDFCF0;
+  --areia-meio:   #F5EED8;
+  --areia-borda:  #E8DFC0;
+  --sol:          #FFD700;
+  --sol-hover:    #FFC200;
+  --laranja:      #FF8C00;
+  --navy:         #0D2340;
+  --navy-meio:    #1A3A5C;
+  --navy-claro:   #2A5080;
+  --agua:         #0099BB;
+  --verde:        #2E9E6B;
+  --vermelho:     #E53935;
+  --cinza-texto:  #5A6A7A;
+  --cinza-borda:  rgba(13,35,64,0.10);
+  --sombra-suave: 0 4px 24px rgba(13,35,64,0.07);
+  --sombra-card:  0 2px 12px rgba(13,35,64,0.08);
+  --raio:         16px;
+  --raio-sm:      10px;
+  --fonte-display: 'Inter', sans-serif;
+  --fonte-corpo:   'Inter', sans-serif;
+}
+
+/* ─── RESET + BASE ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--areia);
+  color: var(--navy);
+  font-family: var(--fonte-corpo);
+  font-size: 14px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--areia-borda); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #d0c5a3; }
+
+/* ─── REDUCED MOTION ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

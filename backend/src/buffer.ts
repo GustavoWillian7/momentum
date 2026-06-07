@@ -26,21 +26,30 @@ function limparBufferAntigo() {
   }
 }
 
+export function bufferAtivo(): boolean {
+  return ffmpegProcess !== null && ffmpegProcess.killed === false;
+}
+
 export function iniciarBuffer() {
-  if (ffmpegProcess) {
-    encerrarBuffer();
+  if (bufferAtivo()) {
+    console.log("⚠️ Buffer já está ativo. Ignorando duplo acionamento.");
+    return;
   }
 
-  console.log("🎥 Iniciando captura da webcam...");
+  console.log("🎥 Iniciando captura da câmera...");
 
-  // Limpa segmentos antigos
-  fs.readdirSync(BUFFER_DIR)
-    .filter((f) => f.endsWith(".mp4"))
-    .forEach((f) => {
-      try {
-        fs.unlinkSync(path.join(BUFFER_DIR, f));
-      } catch (err) {}
-    });
+  // Limpa segmentos antigos com segurança
+  try {
+    fs.readdirSync(BUFFER_DIR)
+      .filter((f) => f.endsWith(".mp4"))
+      .forEach((f) => {
+        try {
+          fs.unlinkSync(path.join(BUFFER_DIR, f));
+        } catch (err) {}
+      });
+  } catch (err) {
+    console.warn("⚠️ Não foi possível limpar buffer anterior:", err);
+  }
 
   console.log("🧹 Buffer limpo.");
 
@@ -65,13 +74,35 @@ export function iniciarBuffer() {
   });
 
   ffmpegProcess.on("close", (code) => {
-    console.log(`⚠️  FFmpeg do Buffer encerrado com código ${code}`);
+    console.log(`⚠️ FFmpeg do Buffer encerrado com código ${code}`);
+    ffmpegProcess = null;
   });
 
   console.log("✅ Buffer ativo. Segmentos sendo salvos em temp/buffer/");
 }
 
 export function encerrarBuffer() {
-  ffmpegProcess?.kill("SIGTERM");
-  console.log("🛑 Captura encerrada.");
+  if (!ffmpegProcess) return;
+
+  const proc = ffmpegProcess;
+  proc.kill("SIGTERM");
+  console.log("🛑 Captura encerrada (SIGTERM). Aguardando processo...");
+
+  // Espera até 3s por shutdown gracioso; senão, SIGKILL
+  const timeout = setTimeout(() => {
+    if (!proc.killed) {
+      console.warn("⚠️ FFmpeg não respondeu a SIGTERM. Forçando SIGKILL...");
+      proc.kill("SIGKILL");
+    }
+    if (ffmpegProcess === proc) {
+      ffmpegProcess = null;
+    }
+  }, 3000);
+
+  proc.on("close", () => {
+    clearTimeout(timeout);
+    if (ffmpegProcess === proc) {
+      ffmpegProcess = null;
+    }
+  });
 }

@@ -136,15 +136,26 @@ app.post("/api/live/start", async (_, res) => {
 
     const args = [
       "-y",
-      // 1. Captura de Vídeo
-      "-f", "vfwcap",
-      "-i", "0",
 
-      // 2. Gerador de Áudio Silencioso
+      // ─── 1. Captura de Vídeo via RTSP ───
+      // TODO(camera): usar a mesma URL RTSP do buffer.ts
+      // Mantenha -re para ler os frames no framerate da câmera (evita quebras na live)
+      "-rtsp_transport", "tcp",
+      "-re",
+      "-thread_queue_size", "512",
+      "-i", "rtsp://USUARIO:SENHA@IP_DA_CAMERA:554/cam/realmonitor?channel=1&subtype=0",
+
+      // ─── 2. Áudio ───
+      // TODO(camera): se a câmera transmitir áudio pelo RTSP, remova o anullsrc
+      // e use o áudio do próprio stream (-c:a aac já captura da fonte).
+      // Por enquanto mantemos áudio sintético silencioso para o YouTube aceitar.
       "-f", "lavfi",
       "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
 
-      // 3. Filtros de Vídeo
+      // ─── 3. Filtros de Vídeo ───
+      // TODO(camera): ajustar crop conforme resolução real da câmera
+      // Webcam antiga era 4:3. Câmera IP provavelmente é 1920x1080 (16:9).
+      // Exemplo para 1920x1080 em live 4:3: crop=1440:1080:240:0,scale=640:480,fps=30
       "-vf", "crop=480:480:80:0,scale=640:480,fps=30",
 
       // 4. Encode de Vídeo

@@ -55,9 +55,24 @@ export function iniciarBuffer() {
 
   const args = [
     "-y",
-    "-f", "vfwcap",
-    "-i", "0",
+
+    // ─── TODO(camera): substituir pela URL RTSP da câmera Intelbras/DVR ───
+    // Modelos comuns Intelbras (DVR/NVR):
+    //   rtsp://admin:SENHA@IP:554/cam/realmonitor?channel=1&subtype=0
+    //   subtype=0 = alta resolução (1080p)  |  subtype=1 = baixa resolução
+    // Outras marcas:
+    //   Hikvision: rtsp://admin:SENHA@IP:554/Streaming/Channels/101
+    //   Dahua:     rtsp://admin:SENHA@IP:554/cam/realmonitor?channel=1&subtype=0
+    "-rtsp_transport", "tcp",
+    "-thread_queue_size", "512",
+    "-i", "rtsp://USUARIO:SENHA@IP_DA_CAMERA:554/cam/realmonitor?channel=1&subtype=0",
+
+    // ─── TODO(camera): ajustar crop conforme resolução real da câmera ───
+    // Webcam do notebook era 4:3. Câmera IP provavelmente é 1920x1080 (16:9).
+    // Para Shorts 9:16, extraímos uma faixa vertical do centro da imagem.
+    // Exemplo para 1920x1080: crop=607:1080:657:0,scale=360:640
     "-vf", "crop=480:480:80:0,scale=360:640",
+
     "-c:v", "libx264",
     "-preset", "ultrafast",
     "-tune", "zerolatency",

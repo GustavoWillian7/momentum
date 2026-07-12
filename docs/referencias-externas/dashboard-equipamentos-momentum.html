@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum — Dashboard de Equipamentos Edge Computing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #06b6d4;
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --info: #8b5cf6;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .kpi-sublabel {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .kpi-card.accent .kpi-value {
+            color: var(--accent-primary);
+        }
+
+        .kpi-card.success .kpi-value {
+            color: var(--success);
+        }
+
+        .kpi-card.warning .kpi-value {
+            color: var(--warning);
+        }
+
+        /* Filters */
+        .filters-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .filters-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .filter-group select,
+        .filter-group input[type="range"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .filter-group input[type="range"] {
+            padding: 0;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--bg-hover);
+        }
+
+        .filter-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .clear-btn {
+            padding: 10px 16px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: fit-content;
+        }
+
+        .clear-btn:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.large {
+            height: 350px;
+        }
+
+        /* Ranking */
+        .ranking-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .ranking-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto auto auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .ranking-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .ranking-pos {
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .ranking-pos.top3 {
+            color: var(--warning);
+        }
+
+        .ranking-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .ranking-cat {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .ranking-score {
+            font-weight: 700;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .ranking-custopq {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .ranking-recom {
+            text-align: right;
+            min-width: 0;
+        }
+
+        .ranking-recom .badge {
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        /* Table */
+        .table-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        tbody tr.recommended {
+            background: var(--success-bg);
+            border-left: 3px solid var(--success);
+        }
+
+        tbody tr.not-recommended {
+            background: var(--danger-bg);
+            border-left: 3px solid var(--danger);
+        }
+
+        tbody tr.recommended:hover,
+        tbody tr.not-recommended:hover {
+            background: var(--bg-hover);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .badge-warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .badge-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .badge-info {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--info);
+            border: 1px solid var(--info);
+        }
+
+        .badge-muted {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .price-cell {
+            font-family: 'Inter', monospace;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .price-na {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .link-btn {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--accent-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .link-btn:hover {
+            background: var(--accent-secondary);
+        }
+
+        /* ============ RESPONSIVE ============ */
+
+        /* Tablet (até 1024px) */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .chart-container {
+                height: 260px;
+            }
+            .chart-container.large {
+                height: 300px;
+            }
+            .ranking-item {
+                gap: 10px;
+            }
+        }
+
+        /* Tablet pequeno / celular grande (até 768px) */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+                max-width: 100%;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .header p {
+                font-size: 12px;
+            }
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .kpi-card {
+                padding: 14px;
+            }
+            .kpi-value {
+                font-size: 22px;
+            }
+            .kpi-sublabel {
+                font-size: 11px;
+            }
+            .filters-section {
+                padding: 14px;
+            }
+            .filters-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .filter-group label {
+                font-size: 10px;
+            }
+            .clear-btn {
+                width: 100%;
+            }
+            .chart-card {
+                padding: 14px;
+            }
+            .chart-title {
+                font-size: 13px;
+            }
+            .chart-container {
+                height: 220px;
+            }
+            .chart-container.large {
+                height: 260px;
+            }
+            .ranking-section {
+                padding: 14px;
+            }
+            .ranking-title {
+                font-size: 14px;
+            }
+            .ranking-item {
+                grid-template-columns: 28px 1fr auto;
+                gap: 8px;
+                padding: 10px 12px;
+            }
+            .ranking-pos {
+                font-size: 16px;
+            }
+            .ranking-name {
+                font-size: 12px;
+            }
+            .ranking-cat {
+                font-size: 10px;
+            }
+            .ranking-score {
+                font-size: 12px;
+            }
+            .ranking-custopq {
+                display: none;
+            }
+            .ranking-recom .badge {
+                font-size: 9px;
+                padding: 2px 6px;
+            }
+            .table-section {
+                padding: 12px;
+            }
+            .table-title {
+                font-size: 14px;
+            }
+            table {
+                font-size: 11px;
+            }
+            thead th {
+                padding: 8px 10px;
+                font-size: 9px;
+            }
+            tbody td {
+                padding: 8px 10px;
+            }
+        }
+
+        /* Celular (até 576px) */
+        @media (max-width: 576px) {
+            .container {
+                padding: 10px;
+            }
+            .header {
+                margin-bottom: 16px;
+                padding-bottom: 12px;
+            }
+            .header h1 {
+                font-size: 18px;
+                line-height: 1.3;
+                word-break: break-word;
+            }
+            .header p {
+                font-size: 11px;
+                line-height: 1.4;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .kpi-card {
+                padding: 10px 12px;
+                min-width: 0;
+            }
+            .kpi-label {
+                font-size: 9px;
+                letter-spacing: 0.3px;
+                margin-bottom: 4px;
+            }
+            .kpi-value {
+                font-size: 16px;
+                word-break: break-word;
+                line-height: 1.2;
+            }
+            .kpi-sublabel {
+                font-size: 9px;
+                margin-top: 2px;
+            }
+            .filters-section {
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+            .filters-title {
+                font-size: 13px;
+                margin-bottom: 12px;
+            }
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .clear-btn {
+                width: 100%;
+                margin-top: 4px;
+            }
+            .chart-card {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            .chart-title {
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+            .chart-container {
+                height: 200px;
+            }
+            .chart-container.large {
+                height: 240px;
+            }
+            .ranking-section {
+                padding: 12px;
+            }
+            .ranking-title {
+                font-size: 13px;
+                margin-bottom: 12px;
+            }
+            .ranking-item {
+                grid-template-columns: 28px 1fr auto;
+                gap: 8px;
+                padding: 10px 12px;
+            }
+            .ranking-pos {
+                font-size: 15px;
+            }
+            .ranking-name {
+                font-size: 12px;
+                line-height: 1.3;
+            }
+            .ranking-cat {
+                font-size: 10px;
+            }
+            .ranking-score {
+                font-size: 11px;
+            }
+            .ranking-recom .badge {
+                font-size: 8px;
+                padding: 2px 5px;
+                max-width: 80px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: inline-block;
+                white-space: nowrap;
+            }
+            .table-section {
+                padding: 10px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            table {
+                font-size: 10px;
+                min-width: 600px;
+            }
+            thead th {
+                padding: 6px 8px;
+                font-size: 8px;
+            }
+            tbody td {
+                padding: 6px 8px;
+            }
+            .badge {
+                font-size: 8px;
+                padding: 2px 5px;
+            }
+            .link-btn {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+        }
+
+        /* Celular pequeno (até 430px) */
+        @media (max-width: 430px) {
+            .header h1 {
+                font-size: 16px;
+                line-height: 1.3;
+                word-break: break-word;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                margin-bottom: 12px;
+            }
+            .kpi-card {
+                padding: 8px 12px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                min-width: 0;
+            }
+            .kpi-label {
+                margin-bottom: 0;
+                font-size: 9px;
+                line-height: 1.2;
+                flex: 1;
+            }
+            .kpi-value {
+                font-size: 14px;
+                text-align: right;
+                flex-shrink: 0;
+            }
+            .kpi-sublabel {
+                display: none;
+            }
+            .ranking-item {
+                grid-template-columns: 28px 1fr auto;
+                gap: 8px;
+                padding: 10px 12px;
+                align-items: flex-start;
+            }
+            .ranking-pos {
+                font-size: 14px;
+                min-width: 22px;
+                line-height: 1.3;
+                padding-top: 2px;
+            }
+            .ranking-name {
+                font-size: 12px;
+                line-height: 1.3;
+            }
+            .ranking-cat {
+                font-size: 10px;
+                display: block;
+            }
+            .ranking-score {
+                font-size: 11px;
+            }
+            .ranking-recom {
+                display: none !important;
+            }
+            .ranking-custopq {
+                display: none;
+            }
+            .chart-container {
+                height: 180px;
+            }
+            .chart-container.large {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏖️ Momentum — Dashboard de Equipamentos</h1>
+            <p>Análise comparativa de hardware edge computing para processamento de vídeo em quadras esportivas</p>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid" id="kpiSection">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filters-title">🔎 Filtros</div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Categoria</label>
+                    <select id="filterCategoria">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>PoE Nativo</label>
+                    <select id="filterPoE">
+                        <option value="">Todos</option>
+                        <option value="Sim">Sim</option>
+                        <option value="Nao">Não</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Fanless / Rugged</label>
+                    <select id="filterFanless">
+                        <option value="">Todos</option>
+                        <option value="Sim">Sim</option>
+                        <option value="Nao">Não</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Preço máximo: <span id="precoValue">R$ 30.000</span></label>
+                    <input type="range" id="filterPreco" min="0" max="30000" step="500" value="30000">
+                    <div class="range-values">
+                        <span>R$ 0</span>
+                        <span>R$ 30.000</span>
+                    </div>
+                </div>
+                <div class="filter-group" style="display:flex; align-items:end;">
+                    <button class="clear-btn" onclick="clearFilters()">Limpar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">💰 Custo Total por Equipamento</div>
+                <div class="chart-container">
+                    <canvas id="chartCusto"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">⚡ Consumo Energético (W)</div>
+                <div class="chart-container">
+                    <canvas id="chartConsumo"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom: 24px;">
+            <div class="chart-title">📊 Custo vs. Quadras Suportadas (tamanho = consumo W)</div>
+            <div class="chart-container large">
+                <canvas id="chartScatter"></canvas>
+            </div>
+        </div>
+
+        <!-- Ranking -->
+        <div class="ranking-section">
+            <div class="ranking-title">🏆 Ranking de Custo-Benefício — Score: (Quadras × 1000) ÷ Custo Total</div>
+            <div class="ranking-list" id="rankingList">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-section">
+            <div class="table-title">📋 Tabela Comparativa Completa</div>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Equipamento</th>
+                        <th>Categoria</th>
+                        <th>CPU/SoC</th>
+                        <th>RAM</th>
+                        <th>Custo Equip.</th>
+                        <th>Custo Total</th>
+                        <th>Quadras</th>
+                        <th>Consumo (W)</th>
+                        <th>PoE</th>
+                        <th>Fanless</th>
+                        <th>Custo/Quadra</th>
+                        <th>Recomendação</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Injected via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATA PARSING ============
+        const rawCSV = `Categoria,Equipamento,CPU_SoC,RAM,Armazenamento,PoE nativo,Rugged_Fanless,Preco equipamento (R$),Link,Infraestrutura necessaria,Custo total estimado (R$),Quadras suportadas,Consumo (W),Observacoes,Recomendacao
+Teste / POC,Notebook proprio + webcam,Varia,Varia,Varia,Nao,Nao,0,https://n/a,Camera IP emprestada + hotspot celular,0,1,30-60,Validar RTSP e upload antes de comprar. Nao escalavel.,ESSENCIAL - faca antes de comprar
+Teste / POC,Raspberry Pi 4B 4GB + SSD USB,ARM Cortex-A72,4GB,SSD USB 128GB,Nao (HAT PoE extra),Nao (com cooler),700,https://www.pishop.us/,HAT PoE ~80 + cooler + case,~900,1,5-8,Limitado: nao aguenta buffer + live simultaneos por +2h. SD card quebra.,ALTERNATIVA BARATA para teste
+Teste / POC,Orange Pi 5 8GB,Rockchip RK3588S,8GB,NVMe M.2 / MicroSD,Nao,Nao (dissipador obrigatorio),1134,https://www.reduza.com.br/orange-pi-5-8gb-rockchip-rk3588s-8-core-64-bit-computador-de-placa-unica-suporte-a-codec-de-video-8k-e-ate-24ghz-compativel-orange-piubuntudebianandroid-12-os-pi-5-8gb/pr,Fonte + case + dissipador + SSD NVMe,~1500,1,8-12,Fora de estoque no Brasil. 8K decode por hardware. NPU 6 TOPS para IA futura.,AGUARDAR ESTOQUE
+Consumo - 1 quadra,GMKtec Nucbox G3,N100 / 4-core / QuickSync,16GB,1TB SSD NVMe,Nao,Nao,2681,https://www.amazon.com.br/GMKtec-16GB-1TB-Computador-Nucbox/dp/B0D5CLW8G8,Injetor PoE ~120 + cabo ~40,~2840,1,15-25,Windows 11. QuickSync acelera FFmpeg. Custo-beneficio bom para 1 quadra.,RECOMENDADO para 1 quadra
+Consumo - 1 quadra,MeLE Quieter 4C,N100 / 4-core / QuickSync,16GB,512GB SSD,Nao,Sim (fanless),2379,https://www.amazon.com.br/s?k=MeLE+Quieter+4C,Injetor PoE ~120 + cabo ~40,~2540,1,15-25,Fanless = ideal para ambiente com poeira. Nao tem PoE - precisa injetor.,RECOMENDADO para 1 quadra (fanless)
+Consumo - 1 quadra,Beelink Mini S12 Pro,N100 / 4-core / QuickSync,16GB,500GB SSD,Nao,Nao,2698,https://www.amazon.com.br/s?k=Beelink+Mini+S12+Pro,Injetor PoE ~120 + cabo ~40,~2860,1,15-25,Similar ao GMKtec. Windows 11. QuickSync.,RECOMENDADO para 1 quadra
+ARM - 1 quadra,Orange Pi 5 Plus 16GB,Rockchip RK3588,16GB,NVMe M.2 + eMMC,Nao,Nao (dissipador),390 USD (~2000),https://orangepi.net/product/orange-pi-5-plus-16gb,Fonte + case + dissipador + SSD + cabo + injetor PoE,~2400,1-2,10-15,Dual 2.5GbE = conecta 2 cameras ou gateway multi-quadra. Importacao com risco.,OPCAO FUTURA (multi-quadra leve)
+Industrial - 2-4 quadras,Neousys POC-715,Core i3-N305 ou Atom x7425E,Varia (ate 32GB),M.2 2280 SSD,Sim (4x GbE PoE+),Sim (fanless -25 a +70C),Sob cotacao,https://www.assured-systems.com/pt/neousys-poc-715/,Cabo Ethernet ~50 x4 + cameras,~5000-8000 (estimado),4,20-30,Unico com 4x PoE+. Fanless industrial. Suporta 4 cameras/quadras com 1 so equipamento.,RECOMENDADO para multi-quadra
+Industrial - 2 cameras,T-PI IPC IBOX-205-4L2C2P,Core i5/i7 ou Celeron 6305E,Varia,M.2 + Mini-PCIe,Sim (2x PoE) + 2x 2.5GbE,Sim (industrial -10 a +55C),Sob cotacao,https://www.ttipc.com/product/ibox-205-4l2c2p/,Cabo Ethernet ~50 x2 + cameras + switch se +2 cameras,~4000-6000 (estimado),2,25-35,2x PoE + 2x 2.5GbE. Rede mais rapida que POC-715. Nao escala para 4 sem switch.,ALTERNATIVA industrial
+Edge AI - 1 quadra + IA futura,reComputer J3011 (Jetson Orin Nano 8GB),ARM + NVIDIA Ampere / 40 TOPS,8GB,128GB SSD,Nao,Nao,11310,https://www.performancesolutions.com.br/recomputer-j3011-edge-ai-device-nvidia-jetson-orin-nano-8gb-inteligencia-artificial,Injetor PoE ~120 + cabo ~40,~11500,1,15-25,Overkill para Momentum hoje. So faz sentido se adicionar IA (detecao de bola/jogadores).,NAO RECOMENDADO (custo)
+Edge AI - 1 quadra + IA futura,ASUS PE1100N (Jetson Orin NX 16GB),ARM + NVIDIA / 100 TOPS,16GB DDR5,128GB SSD,Nao,Sim (fanless trilho DIN),23409,https://ecoautomacao.com.br/produto/computador-edge-ai-fanless-arm-cortex-a78ae-ram-16gb-ddr5-ssd-128gb-nvidia-jetson-orin-nx-16gb-pe1100n-nx16g-asus/,Injetor PoE ~120 + cabo ~40,~23600,1,20-30,Extremamente caro. Industrial com trilho DIN. Para IA pesada + visao computacional.,NÃO RECOMENDADO (custo proibitivo)`;
+
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',');
+                const row = {};
+                headers.forEach((h, idx) => {
+                    row[h.trim()] = cols[idx] ? cols[idx].trim() : '';
+                });
+                data.push(row);
+            }
+            return data;
+        }
+
+        function parseNumber(val) {
+            if (!val || val === 'Sob cotacao' || val === 'Varia') return null;
+            // Remove ~ and extract
+            let cleaned = val.replace(/~/g, '').replace(/R\$/g, '').trim();
+            // Handle ranges like "5000-8000"
+            if (cleaned.includes('-')) {
+                const parts = cleaned.split('-');
+                const a = parseFloat(parts[0]);
+                const b = parseFloat(parts[1]);
+                if (!isNaN(a) && !isNaN(b)) return (a + b) / 2;
+            }
+            // Handle "390 USD (~2000)" -> extract 2000
+            const match = cleaned.match(/\(~?(\d[\d,.]*)\)/);
+            if (match) {
+                const n = parseFloat(match[1].replace(/,/g, ''));
+                if (!isNaN(n)) return n;
+            }
+            const n = parseFloat(cleaned.replace(/,/g, ''));
+            return isNaN(n) ? null : n;
+        }
+
+        function parseQuadras(val) {
+            if (!val || val === 'Varia') return null;
+            if (val.includes('-')) {
+                const parts = val.split('-');
+                const a = parseFloat(parts[0]);
+                const b = parseFloat(parts[1]);
+                if (!isNaN(a) && !isNaN(b)) return (a + b) / 2;
+            }
+            const n = parseFloat(val);
+            return isNaN(n) ? null : n;
+        }
+
+        function parseConsumo(val) {
+            if (!val || val === 'Varia') return null;
+            if (val.includes('-')) {
+                const parts = val.split('-');
+                const a = parseFloat(parts[0]);
+                const b = parseFloat(parts[1]);
+                if (!isNaN(a) && !isNaN(b)) return (a + b) / 2;
+            }
+            const n = parseFloat(val);
+            return isNaN(n) ? null : n;
+        }
+
+        function isSim(val) {
+            if (!val) return false;
+            const v = val.toLowerCase();
+            return v.includes('sim') || v.includes('yes') || v.includes('✅');
+        }
+
+        function fixAcentuacao(text) {
+            if (!text) return text;
+            // Exact matches (CSV values)
+            const map = {
+                'AGUARDAR ESTOQUE': 'Aguardar Estoque',
+                'OPCAO FUTURA': 'Opção Futura',
+                'RECOMENDADO para 1 quadra (fanless)': 'Recomendado para 1 Quadra (Fanless)',
+                'RECOMENDADO para 1 quadra': 'Recomendado para 1 Quadra',
+                'RECOMENDADO para multi-quadra': 'Recomendado para Multi-quadra',
+                'NAO RECOMENDADO (custo)': 'Não Recomendado (Custo)',
+                'NÃO RECOMENDADO (custo proibitivo)': 'Não Recomendado (Custo Proibitivo)',
+                'ALTERNATIVA BARATA para teste': 'Alternativa Barata para Teste',
+                'ALTERNATIVA industrial': 'Alternativa Industrial',
+                'ESSENCIAL - faca antes de comprar': 'Essencial — Faça Antes de Comprar',
+                'Consumo - 1 quadra': 'Consumo — 1 Quadra',
+                'ARM - 1 quadra': 'ARM — 1 Quadra',
+                'Industrial - 2-4 quadras': 'Industrial — 2-4 Quadras',
+                'Industrial - 2 cameras': 'Industrial — 2 Câmeras',
+                'Edge AI - 1 quadra + IA futura': 'Edge AI — 1 Quadra + IA Futura',
+                'Sob cotacao': 'Sob Cotação',
+                'A cotar': 'A cotar',
+                'Nao': 'Não',
+                'Nao (HAT PoE extra)': 'Não (HAT PoE Extra)',
+                'Nao (com cooler)': 'Não (com Cooler)',
+                'Nao (dissipador obrigatorio)': 'Não (Dissipador Obrigatório)',
+                'Sim (fanless)': 'Sim (Fanless)',
+                'Sim (fanless -25 a +70C)': 'Sim (Fanless -25°C a +70°C)',
+                'Sim (industrial -10 a +55C)': 'Sim (Industrial -10°C a +55°C)',
+                'Sim (4x GbE PoE+)': 'Sim (4x GbE PoE+)',
+                'Sim (2x PoE) + 2x 2.5GbE': 'Sim (2x PoE) + 2x 2.5GbE',
+                'Sim (fanless trilho DIN)': 'Sim (Fanless Trilho DIN)',
+            };
+            if (map[text]) return map[text];
+            // Context-aware replacements
+            let result = text;
+            // Temperature ranges
+            result = result.replace(/-25 a \+70C/g, '-25°C a +70°C');
+            result = result.replace(/-10 a \+55C/g, '-10°C a +55°C');
+            result = result.replace(/-10 a \+60C/g, '-10°C a +60°C');
+            // Phrases with missing accents
+            result = result.replace(/Nao tem/g, 'Não tem');
+            result = result.replace(/Nao escalavel/g, 'Não escalável');
+            result = result.replace(/Nao escala/g, 'Não escala');
+            result = result.replace(/Nao aguenta/g, 'Não aguenta');
+            result = result.replace(/Nao tem PoE/g, 'Não tem PoE');
+            result = result.replace(/Nao tem monitor/g, 'Não tem monitor');
+            result = result.replace(/Custo-beneficio/g, 'Custo-benefício');
+            result = result.replace(/custo-beneficio/g, 'custo-benefício');
+            result = result.replace(/Nao escalavel/g, 'Não escalável');
+            result = result.replace(/Nao escalavel\b/g, 'Não escalável');
+            result = result.replace(/poeira/g, 'poeira');
+            result = result.replace(/fanless/g, 'Fanless');
+            result = result.replace(/Fanless\b/g, 'Fanless');
+            // Category headers
+            result = result.replace(/Teste \/ POC/g, 'Teste / POC');
+            return result;
+        }
+
+        function getRecomendacaoClass(rec) {
+            if (!rec) return 'muted';
+            const r = rec.toLowerCase();
+            if (r.includes('nao recomendado') || r.includes('não recomendado') || r.includes('proibitivo')) return 'danger';
+            if (r.includes('recomendado') || r.includes('essencial')) return 'success';
+            if (r.includes('alternativa') || r.includes('opcao futura') || r.includes('aguardar') || r.includes('opção futura')) return 'warning';
+            return 'info';
+        }
+
+        function getRecomendacaoBadge(rec) {
+            const cls = getRecomendacaoClass(rec);
+            return `<span class="badge badge-${cls}">${rec}</span>`;
+        }
+
+        function getRowClass(rec) {
+            const cls = getRecomendacaoClass(rec);
+            if (cls === 'success') return 'recommended';
+            if (cls === 'danger') return 'not-recommended';
+            return '';
+        }
+
+        // Parse raw data
+        let rawData = parseCSV(rawCSV);
+        let data = rawData.map(r => {
+            const parsed = {
+                ...r,
+                precoNum: parseNumber(r['Preco equipamento (R$)']),
+                custoTotalNum: parseNumber(r['Custo total estimado (R$)']),
+                quadrasNum: parseQuadras(r['Quadras suportadas']),
+                consumoNum: parseConsumo(r['Consumo (W)']),
+                poeSim: isSim(r['PoE nativo']),
+                fanlessSim: isSim(r['Rugged_Fanless']),
+                score: null,
+                custoPorQuadra: null
+            };
+            // Apply accentuation fixes for display fields
+            parsed.Equipamento = fixAcentuacao(parsed.Equipamento);
+            parsed.Categoria = fixAcentuacao(parsed.Categoria);
+            parsed.CPU_SoC = fixAcentuacao(parsed.CPU_SoC);
+            parsed.RAM = fixAcentuacao(parsed.RAM);
+            parsed.Recomendacao = fixAcentuacao(parsed.Recomendacao);
+            parsed['PoE nativo'] = fixAcentuacao(parsed['PoE nativo']);
+            parsed['Rugged_Fanless'] = fixAcentuacao(parsed['Rugged_Fanless']);
+            parsed.Observacoes = fixAcentuacao(parsed.Observacoes);
+            parsed['Quadras suportadas'] = fixAcentuacao(parsed['Quadras suportadas']);
+            parsed['Consumo (W)'] = fixAcentuacao(parsed['Consumo (W)']);
+            return parsed;
+        });
+
+        // Calculate derived metrics
+        data.forEach(d => {
+            if (d.custoTotalNum && d.quadrasNum && d.custoTotalNum > 0) {
+                d.score = (d.quadrasNum * 1000) / d.custoTotalNum;
+                d.custoPorQuadra = d.custoTotalNum / d.quadrasNum;
+            }
+        });
+
+        // ============ FILTERS ============
+        const categorias = [...new Set(data.map(d => d.Categoria))];
+        const catSelect = document.getElementById('filterCategoria');
+        categorias.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            catSelect.appendChild(opt);
+        });
+
+        function getFilteredData() {
+            const cat = document.getElementById('filterCategoria').value;
+            const poe = document.getElementById('filterPoE').value;
+            const fan = document.getElementById('filterFanless').value;
+            const precoMax = parseFloat(document.getElementById('filterPreco').value);
+
+            return data.filter(d => {
+                if (cat && d.Categoria !== cat) return false;
+                if (poe === 'Sim' && !d.poeSim) return false;
+                if (poe === 'Nao' && d.poeSim) return false;
+                if (fan === 'Sim' && !d.fanlessSim) return false;
+                if (fan === 'Nao' && d.fanlessSim) return false;
+                if (d.custoTotalNum !== null && d.custoTotalNum > precoMax) return false;
+                return true;
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('filterCategoria').value = '';
+            document.getElementById('filterPoE').value = '';
+            document.getElementById('filterFanless').value = '';
+            document.getElementById('filterPreco').value = 30000;
+            document.getElementById('precoValue').textContent = 'R$ 30.000';
+            updateDashboard();
+        }
+
+        document.getElementById('filterPreco').addEventListener('input', e => {
+            document.getElementById('precoValue').textContent = 'R$ ' + parseInt(e.target.value).toLocaleString('pt-BR');
+            updateDashboard();
+        });
+        ['filterCategoria', 'filterPoE', 'filterFanless'].forEach(id => {
+            document.getElementById(id).addEventListener('change', updateDashboard);
+        });
+
+        // ============ KPIs ============
+        function updateKPIs(filtered) {
+            const el = document.getElementById('kpiSection');
+
+            // Custo médio por categoria
+            const cats = {};
+            filtered.forEach(d => {
+                if (d.custoTotalNum !== null) {
+                    if (!cats[d.Categoria]) cats[d.Categoria] = { sum: 0, count: 0 };
+                    cats[d.Categoria].sum += d.custoTotalNum;
+                    cats[d.Categoria].count++;
+                }
+            });
+            let avgCustoCat = 0, catCount = 0;
+            Object.values(cats).forEach(c => {
+                avgCustoCat += c.sum / c.count;
+                catCount++;
+            });
+            if (catCount > 0) avgCustoCat /= catCount;
+
+            // Melhor custo-beneficio (maior score)
+            const validScore = filtered.filter(d => d.score !== null);
+            const best = validScore.length > 0
+                ? validScore.reduce((a, b) => a.score > b.score ? a : b)
+                : null;
+
+            // Range de custo
+            const custos = filtered.map(d => d.custoTotalNum).filter(v => v !== null);
+            const minCusto = custos.length > 0 ? Math.min(...custos) : 0;
+            const maxCusto = custos.length > 0 ? Math.max(...custos) : 0;
+
+            // Consumo médio
+            const consumos = filtered.map(d => d.consumoNum).filter(v => v !== null);
+            const avgConsumo = consumos.length > 0 ? consumos.reduce((a, b) => a + b, 0) / consumos.length : 0;
+
+            el.innerHTML = `
+                <div class="kpi-card accent">
+                    <div class="kpi-label">Custo Médio por Categoria</div>
+                    <div class="kpi-value">R$ ${Math.round(avgCustoCat).toLocaleString('pt-BR')}</div>
+                    <div class="kpi-sublabel">Média entre ${catCount} categorias</div>
+                </div>
+                <div class="kpi-card success">
+                    <div class="kpi-label">Melhor Custo-Benefício</div>
+                    <div class="kpi-value" style="font-size:18px">${best ? best.Equipamento.split(' ').slice(0, 3).join(' ') + '...' : '—'}</div>
+                    <div class="kpi-sublabel">Score: ${best ? best.score.toFixed(2) : '—'}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Equipamentos Analisados</div>
+                    <div class="kpi-value">${filtered.length}</div>
+                    <div class="kpi-sublabel">de ${data.length} totais</div>
+                </div>
+                <div class="kpi-card warning">
+                    <div class="kpi-label">Range de Custo Total</div>
+                    <div class="kpi-value" style="font-size:20px">R$ ${minCusto.toLocaleString('pt-BR')} ~ R$ ${maxCusto.toLocaleString('pt-BR')}</div>
+                    <div class="kpi-sublabel">Delta: R$ ${(maxCusto - minCusto).toLocaleString('pt-BR')}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Consumo Médio de Energia</div>
+                    <div class="kpi-value">${avgConsumo.toFixed(1)} W</div>
+                    <div class="kpi-sublabel">Média entre ${consumos.length} equipamentos</div>
+                </div>
+            `;
+        }
+
+        // ============ CHARTS ============
+        let chartCusto, chartConsumo, chartScatter;
+
+        function initCharts() {
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.borderColor = '#334155';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+        }
+
+        function updateCharts(filtered) {
+            const sortedByCusto = [...filtered].sort((a, b) => (a.custoTotalNum || 999999) - (b.custoTotalNum || 999999));
+            const labels = sortedByCusto.map(d => d.Equipamento.length > 30 ? d.Equipamento.substring(0, 27) + '...' : d.Equipamento);
+            const custos = sortedByCusto.map(d => d.custoTotalNum);
+            const colors = sortedByCusto.map(d => {
+                const cls = getRecomendacaoClass(d.Recomendacao);
+                if (cls === 'success') return '#10b981';
+                if (cls === 'danger') return '#ef4444';
+                if (cls === 'warning') return '#f59e0b';
+                return '#3b82f6';
+            });
+
+            if (chartCusto) chartCusto.destroy();
+            chartCusto = new Chart(document.getElementById('chartCusto'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Custo Total (R$)',
+                        data: custos,
+                        backgroundColor: colors,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#94a3b8',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: ctx => {
+                                    const d = sortedByCusto[ctx.dataIndex];
+                                    return [
+                                        `Custo Total: R$ ${ctx.raw?.toLocaleString('pt-BR') || 'A cotar'}`,
+                                        `Categoria: ${d.Categoria}`,
+                                        `Quadras: ${d['Quadras suportadas']}`,
+                                        `Consumo: ${d['Consumo (W)']}W`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#1e293b' },
+                            ticks: {
+                                callback: v => 'R$ ' + v.toLocaleString('pt-BR')
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 }, maxRotation: 45 }
+                        }
+                    }
+                }
+            });
+
+            // Horizontal bar: Consumo
+            const sortedByConsumo = [...filtered].filter(d => d.consumoNum !== null).sort((a, b) => a.consumoNum - b.consumoNum);
+            if (chartConsumo) chartConsumo.destroy();
+            chartConsumo = new Chart(document.getElementById('chartConsumo'), {
+                type: 'bar',
+                data: {
+                    labels: sortedByConsumo.map(d => d.Equipamento.length > 30 ? d.Equipamento.substring(0, 27) + '...' : d.Equipamento),
+                    datasets: [{
+                        label: 'Consumo (W)',
+                        data: sortedByConsumo.map(d => d.consumoNum),
+                        backgroundColor: sortedByConsumo.map(d => {
+                            const w = d.consumoNum;
+                            if (w <= 10) return '#10b981';
+                            if (w <= 20) return '#3b82f6';
+                            if (w <= 30) return '#f59e0b';
+                            return '#ef4444';
+                        }),
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: ctx => `Consumo: ${ctx.raw} W`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: '#1e293b' },
+                            ticks: { callback: v => v + ' W' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Scatter: Custo vs Quadras
+            const scatterData = filtered.filter(d => d.custoTotalNum !== null && d.quadrasNum !== null).map(d => ({
+                x: d.custoTotalNum,
+                y: d.quadrasNum,
+                r: Math.max(4, Math.min(20, (d.consumoNum || 15) / 2)),
+                equipamento: d.Equipamento,
+                categoria: d.Categoria,
+                consumo: d['Consumo (W)'],
+                recomendacao: d.Recomendacao
+            }));
+
+            if (chartScatter) chartScatter.destroy();
+            chartScatter = new Chart(document.getElementById('chartScatter'), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Equipamentos',
+                        data: scatterData,
+                        backgroundColor: scatterData.map(d => {
+                            const cls = getRecomendacaoClass(d.recomendacao);
+                            if (cls === 'success') return 'rgba(16, 185, 129, 0.7)';
+                            if (cls === 'danger') return 'rgba(239, 68, 68, 0.7)';
+                            if (cls === 'warning') return 'rgba(245, 158, 11, 0.7)';
+                            return 'rgba(59, 130, 246, 0.7)';
+                        }),
+                        borderColor: scatterData.map(d => {
+                            const cls = getRecomendacaoClass(d.recomendacao);
+                            if (cls === 'success') return '#10b981';
+                            if (cls === 'danger') return '#ef4444';
+                            if (cls === 'warning') return '#f59e0b';
+                            return '#3b82f6';
+                        }),
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#94a3b8',
+                            callbacks: {
+                                label: ctx => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `${d.equipamento}`,
+                                        `Custo Total: R$ ${d.x.toLocaleString('pt-BR')}`,
+                                        `Quadras: ${d.y}`,
+                                        `Consumo: ${d.consumo}`,
+                                        `Categoria: ${d.categoria}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Custo Total (R$)', color: '#64748b' },
+                            grid: { color: '#1e293b' },
+                            ticks: { callback: v => 'R$ ' + (v / 1000).toFixed(0) + 'k' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Quadras Suportadas', color: '#64748b' },
+                            grid: { color: '#1e293b' },
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ RANKING ============
+        function updateRanking(filtered) {
+            const valid = filtered.filter(d => d.score !== null).sort((a, b) => b.score - a.score);
+            const el = document.getElementById('rankingList');
+            el.innerHTML = valid.map((d, i) => `
+                <div class="ranking-item">
+                    <div class="ranking-pos ${i < 3 ? 'top3' : ''}">${i + 1}</div>
+                    <div>
+                        <div class="ranking-name">${d.Equipamento}</div>
+                        <div class="ranking-cat">${d.Categoria}</div>
+                    </div>
+                    <div class="ranking-score">${d.score.toFixed(2)} pts</div>
+                    <div class="ranking-custopq">R$ ${Math.round(d.custoPorQuadra).toLocaleString('pt-BR')}/quadra</div>
+                    <div class="ranking-recom">${getRecomendacaoBadge(d.Recomendacao)}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============ TABLE ============
+        function updateTable(filtered) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = filtered.map(d => {
+                const rowCls = getRowClass(d.Recomendacao);
+                const precoDisplay = d.precoNum !== null ? 'R$ ' + d.precoNum.toLocaleString('pt-BR') : '<span class="price-na">A cotar</span>';
+                const custoDisplay = d.custoTotalNum !== null ? 'R$ ' + d.custoTotalNum.toLocaleString('pt-BR') : '<span class="price-na">A cotar</span>';
+                const custoPorQuadraDisplay = d.custoPorQuadra !== null ? 'R$ ' + Math.round(d.custoPorQuadra).toLocaleString('pt-BR') : '<span class="price-na">—</span>';
+                const poeBadge = d.poeSim
+                    ? '<span class="badge badge-success">Sim</span>'
+                    : '<span class="badge badge-muted">Não</span>';
+                const fanBadge = d.fanlessSim
+                    ? '<span class="badge badge-success">Sim</span>'
+                    : '<span class="badge badge-muted">Não</span>';
+                const link = d.Link && d.Link !== 'https://n/a'
+                    ? `<a class="link-btn" href="${d.Link}" target="_blank">Ver</a>`
+                    : '<span class="price-na">—</span>';
+
+                return `<tr class="${rowCls}">
+                    <td><strong>${d.Equipamento}</strong></td>
+                    <td>${d.Categoria}</td>
+                    <td>${d.CPU_SoC}</td>
+                    <td>${d.RAM}</td>
+                    <td class="price-cell">${precoDisplay}</td>
+                    <td class="price-cell">${custoDisplay}</td>
+                    <td>${d['Quadras suportadas']}</td>
+                    <td>${d['Consumo (W)']} W</td>
+                    <td>${poeBadge}</td>
+                    <td>${fanBadge}</td>
+                    <td class="price-cell">${custoPorQuadraDisplay}</td>
+                    <td>${getRecomendacaoBadge(d.Recomendacao)}</td>
+                    <td>${link}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ============ MAIN UPDATE ============
+        function updateDashboard() {
+            const filtered = getFilteredData();
+            updateKPIs(filtered);
+            updateCharts(filtered);
+            updateRanking(filtered);
+            updateTable(filtered);
+        }
+
+        // Init
+        initCharts();
+        updateDashboard();
+    </script>
+</body>
+</html>
